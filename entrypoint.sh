@@ -26,7 +26,7 @@ etcd \
     --trusted-ca-file=/etc/kubernetes/pki/ca.crt &
 
 ./kube-apiserver \
-    --advertise-address=$HOST \
+    --advertise-address=$IP \
     --allow-privileged=true \
     --authorization-mode=Node,RBAC \
     --client-ca-file=/etc/kubernetes/pki/ca.crt \
