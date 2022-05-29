@@ -47,5 +47,28 @@ etcd \
     --tls-cert-file=/etc/kubernetes/pki/apiserver.crt \
     --tls-private-key-file=/etc/kubernetes/pki/apiserver.key &
 
+./kube-controller-manager \
+    --authentication-kubeconfig=/root/.kube/config \
+    --authorization-kubeconfig=/root/.kube/config \
+    --bind-address=127.0.0.1 \
+    --client-ca-file=/etc/kubernetes/pki/ca.crt \
+    --cluster-name=kubernetes \
+    --cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt \
+    --cluster-signing-key-file=/etc/kubernetes/pki/ca.key \
+    --controllers=*,bootstrapsigner,tokencleaner \
+    --kubeconfig=/root/.kube/config \
+    --leader-elect=true \
+    --requestheader-client-ca-file=/etc/kubernetes/pki/ca.crt \
+    --root-ca-file=/etc/kubernetes/pki/ca.crt \
+    --service-account-private-key-file=/etc/kubernetes/pki/sa.key \
+    --use-service-account-credentials=true &
+
+kube-scheduler \
+        --authentication-kubeconfig=/root/.kube/config \
+        --authorization-kubeconfig=/root/.kube/config \
+        --bind-address=127.0.0.1 \
+        --kubeconfig=/root/.kube/config \
+        --leader-elect=false
+
 wait -n
 exit $?
