@@ -65,12 +65,12 @@ etcd \
     --service-account-private-key-file=/etc/kubernetes/pki/sa.key \
     --use-service-account-credentials=true &
 
-kube-scheduler \
+./kube-scheduler \
         --authentication-kubeconfig=/root/.kube/config \
         --authorization-kubeconfig=/root/.kube/config \
         --bind-address=127.0.0.1 \
         --kubeconfig=/root/.kube/config \
-        --leader-elect=false
+        --leader-elect=false &
 
 wait -n
 exit $?
