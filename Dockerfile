@@ -10,6 +10,7 @@ RUN wget https://dl.k8s.io/v1.23.7/bin/linux/amd64/kubeadm && \
     wget https://dl.k8s.io/v1.23.7/bin/linux/amd64/kube-scheduler && \
     chmod +x kube*
 COPY cert.bash ./cert.bash
+COPY kubeconfig.bash ./kubeconfig.bash
 COPY entrypoint.sh entrypoint.sh
 
 VOLUME [ "/etc/kubernetes/pki" ]

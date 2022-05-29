@@ -1,11 +1,13 @@
 #!/bin/bash
-
+CA_KEY=/etc/kubernetes/pki/ca.key
 CA_CRT=/etc/kubernetes/pki/ca.crt
 
 if [[ ! -f "$CA_CRT" ]]; then
     echo "$CA_CRT not exists."
     bash cert.bash
 fi
+
+bash kubeconfig.bash
 
 etcd \
     --advertise-client-urls=https://127.0.0.1:2379 \
