@@ -41,6 +41,16 @@ etcd \
     --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \
     --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \
     --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \
+    --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt \
+    --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key \
+    --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \
+    --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.crt \
+    --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client.key \
+    --requestheader-allowed-names=front-proxy-client \
+    --requestheader-client-ca-file=/etc/kubernetes/pki/ca.crt \
+    --requestheader-extra-headers-prefix=X-Remote-Extra- \
+    --requestheader-group-headers=X-Remote-Group \
+    --requestheader-username-headers=X-Remote-User \
     --secure-port=6443 \
     --service-account-issuer=https://kubernetes.default.svc.cluster.local \
     --service-account-key-file=/etc/kubernetes/pki/sa.pub \
