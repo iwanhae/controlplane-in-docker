@@ -3,6 +3,7 @@ CA_KEY=/etc/kubernetes/pki/ca.key
 CA_CRT=/etc/kubernetes/pki/ca.crt
 
 if [[ ! -f "$CA_CRT" ]]; then
+    IS_INIT=1
     echo "$CA_CRT not exists."
     bash cert.bash
 fi
@@ -23,18 +24,18 @@ etcd \
     --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt \
     --peer-client-cert-auth=true \
     --peer-key-file=/etc/kubernetes/pki/etcd/peer.key \
-    --peer-trusted-ca-file=/etc/kubernetes/pki/ca.crt \
+    --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
     --snapshot-count=10000 \
-    --trusted-ca-file=/etc/kubernetes/pki/ca.crt &
+    --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt &
 
-./kube-apiserver \
+kube-apiserver \
     --advertise-address=$IP \
     --allow-privileged=true \
     --authorization-mode=Node,RBAC \
     --client-ca-file=/etc/kubernetes/pki/ca.crt \
     --enable-admission-plugins=NodeRestriction \
     --enable-bootstrap-token-auth=true \
-    --etcd-cafile=/etc/kubernetes/pki/ca.crt \
+    --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt \
     --etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt \
     --etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key \
     --etcd-servers=https://127.0.0.1:2379 \
@@ -59,27 +60,33 @@ etcd \
     --tls-cert-file=/etc/kubernetes/pki/apiserver.crt \
     --tls-private-key-file=/etc/kubernetes/pki/apiserver.key &
 
-./kube-controller-manager \
-    --authentication-kubeconfig=/root/.kube/config \
-    --authorization-kubeconfig=/root/.kube/config \
+if [[ -v IS_INIT ]]; then
+    kubeadm init phase upload-config kubeadm
+    kubeadm init phase addon all
+fi
+
+
+kube-controller-manager \
+    --authentication-kubeconfig=/etc/kubernetes/controller-manager.conf \
+    --authorization-kubeconfig=/etc/kubernetes/controller-manager.conf \
     --bind-address=127.0.0.1 \
     --client-ca-file=/etc/kubernetes/pki/ca.crt \
     --cluster-name=kubernetes \
     --cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt \
     --cluster-signing-key-file=/etc/kubernetes/pki/ca.key \
     --controllers=*,bootstrapsigner,tokencleaner \
-    --kubeconfig=/root/.kube/config \
+    --kubeconfig=/etc/kubernetes/controller-manager.conf \
     --leader-elect=true \
     --requestheader-client-ca-file=/etc/kubernetes/pki/ca.crt \
     --root-ca-file=/etc/kubernetes/pki/ca.crt \
     --service-account-private-key-file=/etc/kubernetes/pki/sa.key \
     --use-service-account-credentials=true &
 
-./kube-scheduler \
-        --authentication-kubeconfig=/root/.kube/config \
-        --authorization-kubeconfig=/root/.kube/config \
+kube-scheduler \
+        --authentication-kubeconfig=/etc/kubernetes/scheduler.conf \
+        --authorization-kubeconfig=/etc/kubernetes/scheduler.conf \
         --bind-address=127.0.0.1 \
-        --kubeconfig=/root/.kube/config \
+        --kubeconfig=/etc/kubernetes/scheduler.conf \
         --leader-elect=false &
 
 wait -n
