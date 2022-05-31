@@ -9,16 +9,16 @@ RUN wget https://dl.k8s.io/v1.23.7/bin/linux/amd64/kubeadm && \
     wget https://dl.k8s.io/v1.23.7/bin/linux/amd64/kube-controller-manager && \
     wget https://dl.k8s.io/v1.23.7/bin/linux/amd64/kube-scheduler && \
     chmod +x kube* && mv kube* /usr/local/bin
-COPY cert.bash ./cert.bash
-COPY entrypoint.sh entrypoint.sh
-
-VOLUME [ "/etc/kubernetes/pki" ]
-VOLUME [ "/var/lib/etcd" ]
-EXPOSE 6443
-
 RUN apt-get install -y bash-completion && \
     echo 'source /etc/bash_completion' >> ~/.bashrc && \
     echo 'source <(kubectl completion bash)' >> ~/.bashrc
 ENV KUBECONFIG=/etc/kubernetes/admin.conf
+
+COPY cert.bash ./cert.bash
+COPY entrypoint.sh entrypoint.sh
+
+VOLUME [ "/etc/kubernetes" ]
+VOLUME [ "/var/lib/etcd" ]
+EXPOSE 6443
 
 CMD [ "bash", "entrypoint.sh" ]

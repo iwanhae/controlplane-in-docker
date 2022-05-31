@@ -8,8 +8,6 @@ if [[ ! -f "$CA_CRT" ]]; then
     bash cert.bash
 fi
 
-bash kubeconfig.bash
-
 etcd \
     --advertise-client-urls=https://127.0.0.1:2379 \
     --cert-file=/etc/kubernetes/pki/etcd/server.crt \
@@ -62,11 +60,14 @@ kube-apiserver \
 
 if [[ -v IS_INIT ]]; then
     kubeadm init phase upload-config kubeadm
-    kubeadm init phase addon all
+    kubeadm init phase addon all --apiserver-advertise-address $IP --control-plane-endpoint $IP
+    kubeadm init phase bootstrap-token
 fi
 
 
 kube-controller-manager \
+    --allocate-node-cidrs \
+    --cluster-cidr=10.244.0.0/16 \
     --authentication-kubeconfig=/etc/kubernetes/controller-manager.conf \
     --authorization-kubeconfig=/etc/kubernetes/controller-manager.conf \
     --bind-address=127.0.0.1 \
