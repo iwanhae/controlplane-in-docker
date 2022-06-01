@@ -2,6 +2,11 @@
 CA_KEY=/etc/kubernetes/pki/ca.key
 CA_CRT=/etc/kubernetes/pki/ca.crt
 
+if [[ ! -v IP ]]; then
+    echo "no env IP set. exit"
+    exit -1
+fi
+
 if [[ ! -f "$CA_CRT" ]]; then
     IS_INIT=1
     echo "$CA_CRT not exists."
@@ -60,8 +65,10 @@ kube-apiserver \
 
 if [[ -v IS_INIT ]]; then
     kubeadm init phase upload-config kubeadm
+    timeout 10s bash -c 'kubeadm init phase upload-config kubelet -v6' || true # it will be failed, but don't care
     kubeadm init phase addon all --apiserver-advertise-address $IP --control-plane-endpoint $IP
     kubeadm init phase bootstrap-token
+    kubectl apply -f ./kube-flannel.yml    
 fi
 
 
@@ -84,11 +91,19 @@ kube-controller-manager \
     --use-service-account-credentials=true &
 
 kube-scheduler \
-        --authentication-kubeconfig=/etc/kubernetes/scheduler.conf \
-        --authorization-kubeconfig=/etc/kubernetes/scheduler.conf \
-        --bind-address=127.0.0.1 \
-        --kubeconfig=/etc/kubernetes/scheduler.conf \
-        --leader-elect=false &
+    --authentication-kubeconfig=/etc/kubernetes/scheduler.conf \
+    --authorization-kubeconfig=/etc/kubernetes/scheduler.conf \
+    --bind-address=127.0.0.1 \
+    --kubeconfig=/etc/kubernetes/scheduler.conf \
+    --leader-elect=false &
+
+# need 
+# to use iptables, `--cap-add NET_ADMIN`
+# to use iptables in continaer network namespace, `--cap-add=NET_RAW`
+# to use port forwarding, `--sysctl net.ipv4.conf.all.route_localnet=1`
+if [[ -v ENABLE_KUBE_PROXY ]]; then
+    kube-proxy --config=kube-proxy.conf &
+fi
 
 wait -n
 exit $?
