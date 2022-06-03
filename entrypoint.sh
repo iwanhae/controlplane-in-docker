@@ -11,6 +11,7 @@ if [[ ! -f "$CA_CRT" ]]; then
     IS_INIT=1
     echo "$CA_CRT not exists."
     bash cert.bash
+    mkdir /etc/kubernetes/konnectivity-server
 fi
 
 etcd \
@@ -51,7 +52,7 @@ kube-apiserver \
     --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.crt \
     --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client.key \
     --requestheader-allowed-names=front-proxy-client \
-    --requestheader-client-ca-file=/etc/kubernetes/pki/ca.crt \
+    --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt \
     --requestheader-extra-headers-prefix=X-Remote-Extra- \
     --requestheader-group-headers=X-Remote-Group \
     --requestheader-username-headers=X-Remote-User \
@@ -61,16 +62,32 @@ kube-apiserver \
     --service-account-signing-key-file=/etc/kubernetes/pki/sa.key \
     --service-cluster-ip-range=10.96.0.0/12 \
     --tls-cert-file=/etc/kubernetes/pki/apiserver.crt \
-    --tls-private-key-file=/etc/kubernetes/pki/apiserver.key &
+    --tls-private-key-file=/etc/kubernetes/pki/apiserver.key \
+    --egress-selector-config-file=./config/egress-selector-configuration.yaml &
+
+proxy-server \
+    --logtostderr=true \
+    --uds-name=/etc/kubernetes/konnectivity-server/konnectivity-server.socket \
+    --cluster-cert=/etc/kubernetes/pki/apiserver.crt \
+    --cluster-key=/etc/kubernetes/pki/apiserver.key \
+    --mode=grpc \
+    --server-port=0 \
+    --agent-port=8132 \
+    --admin-port=8133 \
+    --health-port=8134 \
+    --agent-namespace=kube-system \
+    --agent-service-account=konnectivity-agent \
+    --kubeconfig=/etc/kubernetes/konnectivity-server.conf \
+    --authentication-audience=system:konnectivity-server &
 
 if [[ -v IS_INIT ]]; then
     kubeadm init phase upload-config kubeadm
-    timeout 10s bash -c 'kubeadm init phase upload-config kubelet -v6' || true # it will be failed, but don't care
+        timeout 10s bash -c 'kubeadm init phase upload-config kubelet -v6' || true # it will be failed, but don't care
     kubeadm init phase addon all --apiserver-advertise-address $IP --control-plane-endpoint $IP
     kubeadm init phase bootstrap-token
-    kubectl apply -f ./kube-flannel.yml    
+    find ./deploy -type f -exec sed -i.bak "s/\$IP_ADDRESS/$IP/g" {} \;
+    kubectl apply -f ./deploy
 fi
-
 
 kube-controller-manager \
     --allocate-node-cidrs \
@@ -96,14 +113,6 @@ kube-scheduler \
     --bind-address=127.0.0.1 \
     --kubeconfig=/etc/kubernetes/scheduler.conf \
     --leader-elect=false &
-
-# need 
-# to use iptables, `--cap-add NET_ADMIN`
-# to use iptables in continaer network namespace, `--cap-add=NET_RAW`
-# to use port forwarding, `--sysctl net.ipv4.conf.all.route_localnet=1`
-if [[ -v ENABLE_KUBE_PROXY ]]; then
-    kube-proxy --config=kube-proxy.conf &
-fi
 
 wait -n
 exit $?
