@@ -6,4 +6,4 @@ egressSelections:
     proxyProtocol: GRPC
     transport:
       uds:
-        udsName: /etc/kubernetes/konnectivity-server/konnectivity-server.socket
+        udsName: /var/lib/konnectivity-server/konnectivity-server.socket

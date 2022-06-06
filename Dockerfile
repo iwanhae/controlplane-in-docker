@@ -22,6 +22,7 @@ COPY deploy deploy
 COPY config config
 COPY cert.bash ./cert.bash
 COPY entrypoint.sh entrypoint.sh
+RUN mkdir -p /var/lib/konnectivity-server
 
 VOLUME [ "/etc/kubernetes" ]
 VOLUME [ "/var/lib/etcd" ]
