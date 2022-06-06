@@ -1,5 +1,5 @@
 IP=192.168.0.33
-DOCKER_IMAGE=iwanhae/controlplane-in-docker
+DOCKER_IMAGE=ghcr.io/iwanhae/controlplane-in-docker
 DOCKER_TAG=test
 
 run: build

@@ -11,7 +11,7 @@ all kubernetes controlplane components in a single container
 docker run -it --rm \
     -e IP={IP Address, that kubelet can access} \
     -p 6443:6443 -p 8132:8132 \
-    iwanhae/controlplane-in-docker
+    ghcr.io/iwanhae/controlplane-in-docker
 ```
 
 #### For persistent using
@@ -21,7 +21,7 @@ docker run -d --name kubernetes \
     -e IP={IP Address, that kubelet can access} \
     -p 6443:6443 -p 8132:8132 \
     -v {path_for_etcd}:/var/lib/etcd -v {path_for_certs}:/etc/kubernetes \
-    iwanhae/controlplane-in-docker`
+    ghcr.io/iwanhae/controlplane-in-docker
 ```
 
 ### Add Worker Nodes
