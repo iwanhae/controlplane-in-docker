@@ -11,7 +11,7 @@ if [[ ! -f "$CA_CRT" ]]; then
     IS_INIT=1
     echo "$CA_CRT not exists."
     bash cert.bash
-    mkdir /etc/kubernetes/konnectivity-server
+    mkdir -p /var/lib/konnectivity-server
 fi
 
 etcd \
@@ -67,7 +67,7 @@ kube-apiserver \
 
 proxy-server \
     --logtostderr=true \
-    --uds-name=/etc/kubernetes/konnectivity-server/konnectivity-server.socket \
+    --uds-name=/var/lib/konnectivity-server/konnectivity-server.socket \
     --cluster-cert=/etc/kubernetes/pki/apiserver.crt \
     --cluster-key=/etc/kubernetes/pki/apiserver.key \
     --mode=grpc \
