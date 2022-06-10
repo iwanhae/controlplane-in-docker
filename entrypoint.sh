@@ -64,6 +64,10 @@ kube-apiserver \
     --tls-private-key-file=/etc/kubernetes/pki/apiserver.key \
     --egress-selector-config-file=./config/egress-selector-configuration.yaml &
 
+if [[ ! -f "/var/lib/konnectivity-server/konnectivity-server.socket" ]]; then
+    rm /var/lib/konnectivity-server/konnectivity-server.socket
+fi
+
 proxy-server \
     --logtostderr=true \
     --uds-name=/var/lib/konnectivity-server/konnectivity-server.socket \
