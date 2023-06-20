@@ -1,0 +1,21 @@
+# fly.toml app configuration file generated for controlplane on 2023-06-20T19:55:42+09:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "controlplane"
+primary_region = "nrt"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+    
+[env]
+  IP = "192.168.100.1"
+
+[[mounts]]
+  source = "etcd"
+  destination = "/var/lib/etcd"

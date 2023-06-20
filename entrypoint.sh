@@ -2,6 +2,16 @@
 CA_KEY=/etc/kubernetes/pki/ca.key
 CA_CRT=/etc/kubernetes/pki/ca.crt
 
+kaustar &
+
+fallocate -l 1024M /swapfile
+chmod 0600 /swapfile
+mkswap /swapfile
+echo 10 > /proc/sys/vm/swappiness
+swapon /swapfile
+echo 1 > /proc/sys/vm/overcommit_memory
+free -m
+
 if [[ ! -v IP ]]; then
     echo "no env IP set. exit"
     exit -1
@@ -9,7 +19,7 @@ fi
 
 if [[ ! -f "$CA_CRT" ]]; then
     IS_INIT=1
-    echo "$CA_CRT not exists."
+    echo "$CA_CRT not exists. Generating one..."
     bash cert.bash    
 fi
 
@@ -32,12 +42,11 @@ etcd \
     --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt &
 
 kube-apiserver \
-    --advertise-address=$IP \
     --allow-privileged=true \
     --authorization-mode=Node,RBAC \
     --client-ca-file=/etc/kubernetes/pki/ca.crt \
     --enable-admission-plugins=NodeRestriction \
-    --enable-bootstrap-token-auth=true \
+    --enable-bootstrap-token-auth=false \
     --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt \
     --etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt \
     --etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key \
@@ -61,37 +70,7 @@ kube-apiserver \
     --service-account-signing-key-file=/etc/kubernetes/pki/sa.key \
     --service-cluster-ip-range=10.96.0.0/12 \
     --tls-cert-file=/etc/kubernetes/pki/apiserver.crt \
-    --tls-private-key-file=/etc/kubernetes/pki/apiserver.key \
-    --egress-selector-config-file=./config/egress-selector-configuration.yaml &
-
-if [[ ! -f "/var/lib/konnectivity-server/konnectivity-server.socket" ]]; then
-    rm /var/lib/konnectivity-server/konnectivity-server.socket
-fi
-
-proxy-server \
-    --logtostderr=true \
-    --uds-name=/var/lib/konnectivity-server/konnectivity-server.socket \
-    --cluster-cert=/etc/kubernetes/pki/apiserver.crt \
-    --cluster-key=/etc/kubernetes/pki/apiserver.key \
-    --mode=grpc \
-    --server-port=0 \
-    --agent-port=8132 \
-    --admin-port=8133 \
-    --health-port=8134 \
-    --agent-namespace=kube-system \
-    --agent-service-account=konnectivity-agent \
-    --kubeconfig=/etc/kubernetes/konnectivity-server.conf \
-    --authentication-audience=system:konnectivity-server &
-
-if [[ -v IS_INIT ]]; then
-    kubeadm init phase upload-config kubeadm
-        timeout 10s bash -c 'kubeadm init phase upload-config kubelet -v6' || true # it will be failed, but don't care
-    kubeadm init phase addon all --apiserver-advertise-address $IP --control-plane-endpoint $IP
-    kubeadm init phase bootstrap-token
-    find ./deploy -type f -exec sed -i.bak "s/\$IP_ADDRESS/$IP/g" {} \;
-    kubectl apply -f ./deploy
-fi
-
+    --tls-private-key-file=/etc/kubernetes/pki/apiserver.key &
 kube-controller-manager \
     --allocate-node-cidrs \
     --cluster-cidr=10.244.0.0/16 \

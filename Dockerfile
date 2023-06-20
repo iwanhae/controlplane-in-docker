@@ -1,6 +1,11 @@
 # fetch konnectivity from container image
 FROM registry.k8s.io/kas-network-proxy/proxy-server:v0.0.37 as konnectivity-server
 
+FROM golang:1.20-buster as builder
+WORKDIR /apps
+COPY ./kaustar .
+RUN go build -o /kaustar main.go
+
 FROM ubuntu:20.04
 
 RUN apt-get update && apt-get install -y etcd openssl wget iptables vim curl
@@ -25,8 +30,12 @@ COPY cert.bash ./cert.bash
 COPY entrypoint.sh entrypoint.sh
 RUN mkdir -p /var/lib/konnectivity-server
 
+COPY --from=builder /kaustar /usr/local/bin
+COPY default.yaml .
+
 VOLUME [ "/etc/kubernetes" ]
 VOLUME [ "/var/lib/etcd" ]
 EXPOSE 6443
+EXPOSE 8080
 
 CMD [ "bash", "entrypoint.sh" ]

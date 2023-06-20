@@ -1,0 +1,9 @@
+server:
+  address: 0.0.0.0:8080
+backend:
+  storage: sqlite
+kubernetes:
+  server: https://127.0.0.1:6443
+  frontProxyClientCert: /etc/kubernetes/pki/front-proxy-client.crt
+  frontProxyClientKey: /etc/kubernetes/pki/front-proxy-client.key
+  caCert: /etc/kubernetes/pki/ca.crt
