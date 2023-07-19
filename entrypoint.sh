@@ -1,4 +1,5 @@
 #!/bin/bash
+# TEST
 CA_KEY=/etc/kubernetes/pki/ca.key
 CA_CRT=/etc/kubernetes/pki/ca.crt
 
